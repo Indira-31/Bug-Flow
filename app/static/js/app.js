@@ -9,64 +9,203 @@ let currentIssueInModal = null;
 let duplicateTimeout = null;
 let filterTimeout = null;
 
-const USER_CREDENTIALS = {
-  admin: "adminpassword123",
-  john_dev: "devpassword123",
-  alice_dev: "devpassword123",
-  bruce_tester: "testerpassword123",
-  tina_triager: "triagerpassword123",
-  sam_stakeholder: "stakeholderpassword123",
-};
-
 // --- INITIALIZATION ---
-document.addEventListener("DOMContentLoaded", async () => {
-  await switchRole("admin");
-  await loadInitialDropdowns();
-  await fetchIssues();
+document.addEventListener("DOMContentLoaded", () => {
+  // Keep login screen visible and dashboard hidden initially until authentication
+  const loginScreen = document.getElementById("login-screen");
+  const appDashboard = document.getElementById("app-dashboard");
+  if (loginScreen) loginScreen.classList.remove("hidden");
+  if (appDashboard) appDashboard.classList.add("hidden");
 });
 
-// --- AUTHENTICATION & ROLE SWITCHING ---
-async function switchRole(username) {
+// --- AUTHENTICATION & LOGIN FLOW ---
+async function handleLogin(event) {
+  if (event) event.preventDefault();
+
+  const errorEl = document.getElementById("login-error");
+  const errorTextEl = document.getElementById("login-error-text");
+  const submitBtn = document.getElementById("login-submit-btn");
+  const spinnerEl = document.getElementById("login-spinner");
+  const btnTextEl = document.getElementById("login-btn-text");
+  const usernameInput = document.getElementById("login-username");
+  const passwordInput = document.getElementById("login-password");
+
+  if (errorEl) errorEl.classList.add("hidden");
+
+  const username = usernameInput ? usernameInput.value.trim() : "";
+  const password = passwordInput ? passwordInput.value : "";
+
+  if (!username || !password) {
+    if (errorTextEl) errorTextEl.textContent = "Please enter both username/email and password.";
+    if (errorEl) errorEl.classList.remove("hidden");
+    return;
+  }
+
+  // Set loading state
+  if (submitBtn) submitBtn.disabled = true;
+  if (spinnerEl) spinnerEl.classList.remove("hidden");
+  if (btnTextEl) btnTextEl.textContent = "Signing In...";
+
   try {
-    const password = USER_CREDENTIALS[username] || "adminpassword123";
     const res = await fetch("/api/v1/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
     });
 
+    const data = await res.json().catch(() => ({}));
+
     if (!res.ok) {
-      showAlert("Login failed for role: " + username, "error");
+      const errorMsg = data.detail || "Authentication failed. Please verify your credentials.";
+      if (errorTextEl) errorTextEl.textContent = errorMsg;
+      if (errorEl) errorEl.classList.remove("hidden");
       return;
     }
 
-    const data = await res.json();
+    // Auth succeeded: store state
     authToken = data.access_token;
     currentUser = data.user;
+
+    // Update user display in top header
+    updateUserHeaderDisplay();
+
+    // Clear password input for security
+    if (passwordInput) passwordInput.value = "";
+
+    // Switch view to dashboard
+    const loginScreen = document.getElementById("login-screen");
+    const appDashboard = document.getElementById("app-dashboard");
+    if (loginScreen) loginScreen.classList.add("hidden");
+    if (appDashboard) appDashboard.classList.remove("hidden");
+
     showAlert(
-      `Switched to <strong>${currentUser.role}</strong> (${currentUser.full_name})`,
+      `Welcome back, <strong>${currentUser.full_name || currentUser.username}</strong>! (${currentUser.role})`,
       "success"
     );
 
-    // Refresh views
-    const activeTab = document.querySelector(".tab-content:not(.hidden)").id;
-    if (activeTab === "tab-m1") fetchIssues();
-    if (activeTab === "tab-m2") {
-      fetchSprints();
-      fetchBacklog();
-      fetchActivityStream();
-    }
-    if (activeTab === "tab-m3") {
-      fetchQualityMetrics();
-      renderPlotlyCharts();
-    }
-    if (activeTab === "tab-m4") {
-      fetchWorkloadMatrix();
+    // Initialize & refresh dashboard data
+    await loadInitialDropdowns();
+    await fetchIssues();
+
+    // Refresh active tab views if already selected
+    const activeTab = document.querySelector(".tab-content:not(.hidden)");
+    if (activeTab) {
+      const activeTabId = activeTab.id;
+      if (activeTabId === "tab-m2") {
+        fetchSprints();
+        fetchBacklog();
+        fetchActivityStream();
+        fetchReleases();
+      } else if (activeTabId === "tab-m3") {
+        fetchQualityMetrics();
+        renderPlotlyCharts();
+      } else if (activeTabId === "tab-m4") {
+        fetchQualityMetrics();
+        fetchWorkloadMatrix();
+      }
     }
   } catch (err) {
-    console.error("Auth error:", err);
-    showAlert("Failed to authenticate user", "error");
+    console.error("Login error:", err);
+    if (errorTextEl) errorTextEl.textContent = "Unable to connect to the authentication server. Please try again.";
+    if (errorEl) errorEl.classList.remove("hidden");
+  } finally {
+    if (submitBtn) submitBtn.disabled = false;
+    if (spinnerEl) spinnerEl.classList.add("hidden");
+    if (btnTextEl) btnTextEl.textContent = "Sign In";
   }
+}
+
+function togglePasswordVisibility() {
+  const passwordInput = document.getElementById("login-password");
+  const icon = document.getElementById("toggle-password-icon");
+  if (!passwordInput || !icon) return;
+
+  if (passwordInput.type === "password") {
+    passwordInput.type = "text";
+    icon.classList.remove("fa-eye");
+    icon.classList.add("fa-eye-slash");
+  } else {
+    passwordInput.type = "password";
+    icon.classList.remove("fa-eye-slash");
+    icon.classList.add("fa-eye");
+  }
+}
+
+function fillCredentials(username, password) {
+  const usernameInput = document.getElementById("login-username");
+  const passwordInput = document.getElementById("login-password");
+  if (usernameInput) usernameInput.value = username;
+  if (passwordInput) passwordInput.value = password;
+  const errorEl = document.getElementById("login-error");
+  if (errorEl) errorEl.classList.add("hidden");
+}
+
+function updateUserHeaderDisplay() {
+  if (!currentUser) return;
+  const nameEl = document.getElementById("user-display-name");
+  const roleEl = document.getElementById("user-display-role");
+  const initialsEl = document.getElementById("user-avatar-initials");
+
+  const displayName = currentUser.full_name || currentUser.username || "User";
+  if (nameEl) nameEl.textContent = displayName;
+  if (roleEl) roleEl.textContent = currentUser.role || "User";
+
+  if (initialsEl) {
+    const parts = displayName.trim().split(" ");
+    let initials = "";
+    if (parts.length >= 2 && parts[0] && parts[1]) {
+      initials = (parts[0][0] + parts[1][0]).toUpperCase();
+    } else if (parts[0] && parts[0].length >= 1) {
+      initials = parts[0].substring(0, 2).toUpperCase();
+    }
+    initialsEl.textContent = initials || "U";
+  }
+}
+
+function handleLogout() {
+  // Clear in-memory auth state
+  authToken = "";
+  currentUser = null;
+
+  // Reset login form and inputs
+  const loginForm = document.getElementById("login-form");
+  if (loginForm) loginForm.reset();
+
+  const passwordInput = document.getElementById("login-password");
+  const icon = document.getElementById("toggle-password-icon");
+  if (passwordInput) passwordInput.type = "password";
+  if (icon) {
+    icon.classList.remove("fa-eye-slash");
+    icon.classList.add("fa-eye");
+  }
+
+  const errorEl = document.getElementById("login-error");
+  if (errorEl) errorEl.classList.add("hidden");
+
+  // Close any open modals
+  const modalIds = [
+    "issue-detail-modal",
+    "ai-core-modal",
+    "sprint-modal",
+    "release-modal",
+    "merge-issues-modal",
+    "escalate-issue-modal",
+    "approve-issue-modal",
+    "portals-modal",
+  ];
+  modalIds.forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add("hidden");
+  });
+
+  // Switch view back to login screen
+  const appDashboard = document.getElementById("app-dashboard");
+  const loginScreen = document.getElementById("login-screen");
+  if (appDashboard) appDashboard.classList.add("hidden");
+  if (loginScreen) loginScreen.classList.remove("hidden");
+
+  const usernameInput = document.getElementById("login-username");
+  if (usernameInput) usernameInput.focus();
 }
 
 function getAuthHeaders() {
@@ -962,6 +1101,7 @@ async function fetchActivityStream() {
 
     const stream = await res.json();
     const container = document.getElementById("activity-stream-list");
+    if (!container) return;
 
     if (stream.length === 0) {
       container.innerHTML = `<span class="text-slate-500 text-xs">No activity yet.</span>`;
