@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BugFlow - Issue Tracking & Resolution Platform</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Plotly.js CDN -->
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              900: '#312e81'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #1e293b; }
+    ::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
+
+  <!-- TOP HEADER -->
+  <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-40 shadow-xl backdrop-blur-md bg-opacity-95">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+      <!-- Logo & Title -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+          <i class="fa-solid fa-bug-slash text-white text-xl"></i>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="text-xl font-black tracking-tight text-white">Bug<span class="text-indigo-400">Flow</span></span>
+            <span class="bg-indigo-500/20 text-indigo-300 text-xs px-2 py-0.5 rounded-full border border-indigo-500/30 font-medium">Enterprise v1.0</span>
+          </div>
+          <p class="text-xs text-slate-400 hidden sm:block">Software Issue Tracking & Resolution Platform</p>
+        </div>
+      </div>
+
+      <!-- Center Status Badges -->
+      <div class="hidden md:flex items-center space-x-3 text-xs">
+        <span class="inline-flex items-center px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse mr-2"></span>
+          PostgreSQL / Pool=20 Active
+        </span>
+        <span class="inline-flex items-center px-2.5 py-1 rounded-md bg-sky-500/10 text-sky-400 border border-sky-500/20 font-medium">
+          <i class="fa-solid fa-shield-halved mr-1.5"></i> JWT RBAC Active
+        </span>
+      </div>
+
+      <!-- Right Profile & Quick Role Switcher -->
+      <div class="flex items-center space-x-3">
+        <!-- Role Switcher -->
+        <div class="flex items-center space-x-2 bg-slate-800/80 border border-slate-700 rounded-lg p-1">
+          <span class="text-xs text-slate-400 px-2 font-medium hidden lg:inline"><i class="fa-solid fa-user-gear mr-1"></i> User:</span>
+          <select id="role-switcher" onchange="switchRole(this.value)" class="bg-slate-900 text-xs text-indigo-300 font-semibold rounded px-2.5 py-1.5 border border-slate-700 focus:outline-none focus:border-indigo-500 cursor-pointer">
+            <option value="admin">ADMIN (Alex Rivera)</option>
+            <option value="john_dev">DEVELOPER (John Doe)</option>
+            <option value="alice_dev">DEVELOPER (Alice Smith)</option>
+            <option value="bruce_tester">TESTER (Bruce Wayne)</option>
+            <option value="tina_triager">TRIAGER (Tina Turner)</option>
+            <option value="sam_stakeholder">STAKEHOLDER (Sam Altman)</option>
+          </select>
+        </div>
+
+        <a href="/docs" target="_blank" class="text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition">
+          <i class="fa-solid fa-book-open text-indigo-400"></i>
+          <span class="hidden sm:inline">Swagger /docs</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- TABS NAVIGATION -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-slate-800/60">
+      <nav class="flex space-x-2 sm:space-x-4 overflow-x-auto py-2 text-sm font-medium">
+        <button onclick="switchTab('tab-m1')" id="nav-tab-m1" class="tab-btn active-tab px-3.5 py-1.5 rounded-lg flex items-center space-x-2 text-indigo-400 bg-indigo-500/10 border border-indigo-500/30 whitespace-nowrap">
+          <i class="fa-solid fa-file-circle-plus"></i>
+          <span>Milestone 1: Issue Reporting & Foundation</span>
+        </button>
+        <button onclick="switchTab('tab-m2')" id="nav-tab-m2" class="tab-btn px-3.5 py-1.5 rounded-lg flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 whitespace-nowrap transition">
+          <i class="fa-solid fa-diagram-project"></i>
+          <span>Milestone 2: Workflow & Collaboration</span>
+        </button>
+        <button onclick="switchTab('tab-m3')" id="nav-tab-m3" class="tab-btn px-3.5 py-1.5 rounded-lg flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 whitespace-nowrap transition">
+          <i class="fa-solid fa-chart-line"></i>
+          <span>Milestone 3: Analytics & APIs</span>
+        </button>
+        <button onclick="switchTab('tab-m4')" id="nav-tab-m4" class="tab-btn px-3.5 py-1.5 rounded-lg flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 whitespace-nowrap transition">
+          <i class="fa-solid fa-gauge-high"></i>
+          <span>Milestone 4: Optimization & Finalization</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- NOTIFICATION BANNER / ALERT -->
+  <div id="global-alert" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+    <div id="global-alert-inner" class="p-4 rounded-xl border flex items-center justify-between text-sm shadow-lg"></div>
+  </div>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- ==================== TAB 1: MILESTONE 1 VIEW ==================== -->
+    <section id="tab-m1" class="tab-content space-y-6">
+      <!-- Section Header -->
+      <div class="flex flex-wrap items-center justify-between gap-4 bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
+        <div>
+          <h1 class="text-xl font-bold text-white flex items-center space-x-2">
+            <span>Issue Reporting & Foundation Registry</span>
+            <span class="text-xs bg-slate-800 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded font-mono">POST /api/v1/issues/</span>
+          </h1>
+          <p class="text-xs text-slate-400">Submit defects with automatic priority scoring, duplicate detection warning, and validated RBAC ingest.</p>
+        </div>
+        <div class="flex items-center space-x-3">
+          <button onclick="exportCSV()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition">
+            <i class="fa-solid fa-file-csv text-emerald-400"></i>
+            <span>Export CSV</span>
+          </button>
+          <button onclick="exportPDF()" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg flex items-center space-x-1.5 shadow-md transition">
+            <i class="fa-solid fa-file-pdf"></i>
+            <span>Export PDF Report</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Issue Creation Card (5 cols) -->
+        <div class="lg:col-span-5 bg-slate-900 rounded-2xl border border-slate-800 p-5 shadow-xl space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h2 class="text-base font-bold text-white flex items-center space-x-2">
+              <i class="fa-solid fa-pen-to-square text-indigo-400"></i>
+              <span>Submit New Issue</span>
+            </h2>
+            <span class="text-xs bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded font-medium">Auto-Triage Active</span>
+          </div>
+
+          <form id="issue-form" onsubmit="handleCreateIssue(event)" class="space-y-3.5 text-xs">
+            <!-- Project Selector -->
+            <div>
+              <label class="block font-semibold text-slate-300 mb-1">Target Project <span class="text-red-400">*</span></label>
+              <select id="form-project" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500"></select>
+            </div>
+
+            <!-- Title with Live Duplicate Warning -->
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="font-semibold text-slate-300">Issue Title <span class="text-red-400">*</span></label>
+                <span id="dup-status-badge" class="text-[10px] text-slate-500">Checking duplicates...</span>
+              </div>
+              <input type="text" id="form-title" required oninput="debounceDuplicateCheck()" placeholder="e.g., PostgreSQL connection timeout under heavy load" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500" />
+              
+              <!-- Real-time Duplicate Alert Container -->
+              <div id="duplicate-warning-box" class="hidden mt-2 p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-lg text-amber-300 text-[11px] space-y-1">
+                <div class="flex items-center font-bold text-amber-400">
+                  <i class="fa-solid fa-triangle-exclamation mr-1.5"></i>
+                  <span>Duplicate Issue Warning (&ge; 55% similarity)</span>
+                </div>
+                <div id="duplicate-matches-list"></div>
+              </div>
+            </div>
+
+            <!-- Severity and Category -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-semibold text-slate-300 mb-1">Severity <span class="text-red-400">*</span></label>
+                <select id="form-severity" onchange="updatePriorityScorePreview()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500">
+                  <option value="CRITICAL">CRITICAL (4 pts)</option>
+                  <option value="MAJOR">MAJOR (3 pts)</option>
+                  <option value="MINOR" selected>MINOR (2 pts)</option>
+                  <option value="TRIVIAL">TRIVIAL (1 pt)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-300 mb-1">Category <span class="text-red-400">*</span></label>
+                <select id="form-category" onchange="updatePriorityScorePreview()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500"></select>
+              </div>
+            </div>
+
+            <!-- Priority Score Auto-Calculation Banner -->
+            <div class="p-2.5 bg-slate-800/80 rounded-lg border border-slate-700 flex items-center justify-between">
+              <div>
+                <span class="text-[11px] text-slate-400 block">Smart Priority Score:</span>
+                <span id="preview-priority-formula" class="text-[10px] text-slate-500">Severity (2) &times; Urgency (2)</span>
+              </div>
+              <div class="text-right">
+                <span id="preview-priority-score" class="font-mono font-bold text-base text-indigo-400">4.0</span>
+                <span id="preview-priority-badge" class="ml-2 px-2 py-0.5 text-[10px] font-bold rounded bg-yellow-500/20 text-yellow-300 border border-yellow-500/30">MEDIUM</span>
+              </div>
+            </div>
+
+            <!-- Description -->
+            <div>
+              <label class="block font-semibold text-slate-300 mb-1">Description <span class="text-red-400">*</span></label>
+              <textarea id="form-description" required rows="2" placeholder="Detailed explanation of the unexpected behavior..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500"></textarea>
+            </div>
+
+            <!-- Reproduction Steps -->
+            <div>
+              <label class="block font-semibold text-slate-300 mb-1">Reproduction Steps</label>
+              <textarea id="form-steps" rows="2" placeholder="1. Navigate to /login&#10;2. Input unicode password&#10;3. Observe crash" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500 font-mono text-[11px]"></textarea>
+            </div>
+
+            <!-- Modules & Environment -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-semibold text-slate-300 mb-1">Affected Modules</label>
+                <input type="text" id="form-modules" placeholder="e.g. Auth, Billing" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500" />
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-300 mb-1">Environment</label>
+                <input type="text" id="form-environment" placeholder="e.g. Chrome 122, Ubuntu 22.04" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500" />
+              </div>
+            </div>
+
+            <!-- Issue Type & Release Milestone -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-semibold text-slate-300 mb-1">Issue Type</label>
+                <select id="form-type" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500">
+                  <option value="BUG" selected>Bug Report</option>
+                  <option value="FEATURE_REQUEST">Feature Request</option>
+                  <option value="ENHANCEMENT">Enhancement Proposal</option>
+                  <option value="SUPPORT_TICKET">Support Ticket</option>
+                  <option value="TECH_DEBT">Technical Debt</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-300 mb-1">Release Milestone</label>
+                <select id="form-release" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500">
+                  <option value="">-- No Release --</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Tags & Code References -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-semibold text-slate-300 mb-1">Tags / Labels</label>
+                <input type="text" id="form-tags" placeholder="e.g. auth, security, db" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500" />
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-300 mb-1">Code References</label>
+                <input type="text" id="form-coderef" placeholder="e.g. PR #12, commit 4a7c18" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500" />
+              </div>
+            </div>
+
+            <!-- Assignee & Dev Stage -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-semibold text-slate-300 mb-1">Dev Stage</label>
+                <select id="form-stage" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500">
+                  <option value="Development">Development</option>
+                  <option value="Testing">Testing</option>
+                  <option value="Staging">Staging</option>
+                  <option value="Production">Production</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-300 mb-1">Assignee</label>
+                <select id="form-assignee" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500"></select>
+              </div>
+            </div>
+
+            <!-- Smart Match Recommendation Helper Trigger -->
+            <div class="pt-1">
+              <button type="button" onclick="triggerSmartDeveloperMatch()" class="w-full py-2 px-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 rounded-lg flex items-center justify-center space-x-2 transition text-xs">
+                <i class="fa-solid fa-wand-magic-sparkles text-indigo-400"></i>
+                <span>Recommend Best Developers (Smart Match)</span>
+              </button>
+              <div id="smart-match-preview" class="hidden mt-2 p-2.5 bg-indigo-950/40 border border-indigo-500/20 rounded-lg text-[11px] space-y-1.5"></div>
+            </div>
+
+            <button type="submit" class="w-full py-2.5 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold rounded-lg shadow-lg shadow-indigo-500/20 transition flex items-center justify-center space-x-2">
+              <i class="fa-solid fa-plus-circle"></i>
+              <span>Create Bug Ticket</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Issue Registry Card (7 cols) -->
+        <div class="lg:col-span-7 bg-slate-900 rounded-2xl border border-slate-800 p-5 shadow-xl flex flex-col">
+          <!-- Card Header & Filters -->
+          <div class="border-b border-slate-800 pb-3 space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <h2 class="text-base font-bold text-white flex items-center space-x-2">
+                <i class="fa-solid fa-list-check text-indigo-400"></i>
+                <span>Active Issue Registry</span>
+                <span id="issue-count-badge" class="ml-2 text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full border border-slate-700">0 bugs</span>
+              </h2>
+              <button onclick="fetchIssues()" class="text-xs text-slate-400 hover:text-white flex items-center space-x-1">
+                <i class="fa-solid fa-rotate mr-1"></i> Refresh
+              </button>
+            </div>
+
+            <!-- Filter Controls -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+              <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500"></i>
+                <input type="text" id="filter-search" oninput="debounceFilterIssues()" placeholder="Search title or text..." class="w-full bg-slate-800 border border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-slate-200 focus:outline-none focus:border-indigo-500" />
+              </div>
+              <select id="filter-status" onchange="fetchIssues()" class="bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-indigo-500">
+                <option value="">All Statuses</option>
+                <option value="REPORTED">REPORTED</option>
+                <option value="TRIAGED">TRIAGED</option>
+                <option value="IN_PROGRESS">IN_PROGRESS</option>
+                <option value="CODE_REVIEW">CODE_REVIEW</option>
+                <option value="QA_VERIFICATION">QA_VERIFICATION</option>
+                <option value="RESOLVED">RESOLVED</option>
+                <option value="CLOSED">CLOSED</option>
+              </select>
+              <select id="filter-severity" onchange="fetchIssues()" class="bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-indigo-500">
+                <option value="">All Severities</option>
+                <option value="CRITICAL">CRITICAL</option>
+                <option value="MAJOR">MAJOR</option>
+                <option value="MINOR">MINOR</option>
+                <option value="TRIVIAL">TRIVIAL</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Issues List Stream -->
+          <div id="issues-list-container" class="flex-1 overflow-y-auto max-h-[620px] divide-y divide-slate-800 mt-2 pr-1 space-y-2">
+            <!-- Populated via JavaScript -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 2: MILESTONE 2 VIEW ==================== -->
+    <section id="tab-m2" class="tab-content hidden space-y-6">
+      <!-- Section Header -->
+      <div class="bg-slate-900/60 p-4 rounded-2xl border border-slate-800 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 class="text-xl font-bold text-white flex items-center space-x-2">
+            <i class="fa-solid fa-network-wired text-indigo-400"></i>
+            <span>Milestone 2: Workflow State Machine & Agile Collaboration</span>
+          </h1>
+          <p class="text-xs text-slate-400">Lifecycle State Transitions, Activity Audit Stream, and 2-Week Agile Sprint Board.</p>
+        </div>
+        <div>
+          <button onclick="openCreateSprintModal()" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-3 py-1.5 rounded-lg flex items-center space-x-1.5 shadow-md transition">
+            <i class="fa-solid fa-plus"></i>
+            <span>Create New Sprint</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- State Machine Visual Pipeline Banner -->
+      <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-xl overflow-x-auto">
+        <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center space-x-2">
+          <i class="fa-solid fa-arrows-split-up-and-left text-indigo-400"></i>
+          <span>Lifecycle State Machine Workflow</span>
+        </div>
+        <div class="flex items-center justify-between min-w-[720px] text-xs">
+          <div class="flex-1 text-center px-2 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 font-bold">REPORTED</div>
+          <div class="px-2 text-slate-600"><i class="fa-solid fa-chevron-right"></i></div>
+          <div class="flex-1 text-center px-2 py-2 rounded-lg bg-purple-950/50 border border-purple-800/60 text-purple-300 font-bold">TRIAGED</div>
+          <div class="px-2 text-slate-600"><i class="fa-solid fa-chevron-right"></i></div>
+          <div class="flex-1 text-center px-2 py-2 rounded-lg bg-blue-950/50 border border-blue-800/60 text-blue-300 font-bold">IN_PROGRESS</div>
+          <div class="px-2 text-slate-600"><i class="fa-solid fa-chevron-right"></i></div>
+          <div class="flex-1 text-center px-2 py-2 rounded-lg bg-pink-950/50 border border-pink-800/60 text-pink-300 font-bold">CODE_REVIEW</div>
+          <div class="px-2 text-slate-600"><i class="fa-solid fa-chevron-right"></i></div>
+          <div class="flex-1 text-center px-2 py-2 rounded-lg bg-amber-950/50 border border-amber-800/60 text-amber-300 font-bold">QA_VERIFICATION</div>
+          <div class="px-2 text-slate-600"><i class="fa-solid fa-chevron-right"></i></div>
+          <div class="flex-1 text-center px-2 py-2 rounded-lg bg-emerald-950/50 border border-emerald-800/60 text-emerald-300 font-bold">RESOLVED</div>
+          <div class="px-2 text-slate-600"><i class="fa-solid fa-chevron-right"></i></div>
+          <div class="flex-1 text-center px-2 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 font-bold">CLOSED</div>
+        </div>
+      </div>
+
+      <!-- SPRINT BOARD & ACTIVITY STREAM GRID -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Agile Sprint Board (8 cols) -->
+        <div class="lg:col-span-8 space-y-6">
+          <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+              <h2 class="text-base font-bold text-white flex items-center space-x-2">
+                <i class="fa-solid fa-person-running text-indigo-400"></i>
+                <span>Agile Sprint Board & Backlog</span>
+              </h2>
+              <span class="text-xs text-slate-400">2-Week Cycles & Velocity Tracking</span>
+            </div>
+
+            <!-- Two-Column Agile Board -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Left: Active Sprints -->
+              <div class="bg-slate-950/70 rounded-xl border border-slate-800 p-4 flex flex-col">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-3">
+                  <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center space-x-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping mr-1"></span>
+                    <span>Active Sprints</span>
+                  </h3>
+                  <span id="active-sprint-badge" class="text-[10px] text-slate-500">Loading...</span>
+                </div>
+                <div id="sprints-container" class="space-y-3 flex-1 overflow-y-auto max-h-[500px]">
+                  <!-- Populated via JS -->
+                </div>
+              </div>
+
+              <!-- Right: Product Backlog -->
+              <div class="bg-slate-950/70 rounded-xl border border-slate-800 p-4 flex flex-col">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-3">
+                  <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center space-x-2">
+                    <i class="fa-solid fa-box-archive text-amber-400"></i>
+                    <span>Product Backlog</span>
+                  </h3>
+                  <span id="backlog-count-badge" class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded">0 bugs waiting</span>
+                </div>
+                <div id="backlog-container" class="space-y-2.5 flex-1 overflow-y-auto max-h-[500px]">
+                  <!-- Populated via JS -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Live Activity Stream / Audit Log (4 cols) -->
+        <div class="lg:col-span-4 bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl flex flex-col">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-3">
+            <h2 class="text-base font-bold text-white flex items-center space-x-2">
+              <i class="fa-solid fa-clock-rotate-left text-indigo-400"></i>
+              <span>Live Activity Stream</span>
+            </h2>
+            <button onclick="fetchActivityStream()" class="text-xs text-slate-400 hover:text-white">
+              <i class="fa-solid fa-rotate"></i>
+            </button>
+          </div>
+          <p class="text-xs text-slate-400 mb-3">Immutable AuditLog feed tracking who changed what & when.</p>
+        </div>
+      </div>
+
+      <!-- Release Milestones & Readiness Dashboard (Module 4) -->
+      <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+          <div>
+            <h2 class="text-base font-bold text-white flex items-center space-x-2">
+              <i class="fa-solid fa-flag-checkered text-emerald-400"></i>
+              <span>Agile Release Milestones & Release Readiness (Module 4)</span>
+            </h2>
+            <p class="text-xs text-slate-400">Track target software releases, defect blockers, and automated go/no-go readiness indicators.</p>
+          </div>
+          <button onclick="fetchReleases()" class="text-xs text-slate-400 hover:text-white flex items-center space-x-1">
+            <i class="fa-solid fa-rotate mr-1"></i> Refresh Releases
+          </button>
+        </div>
+
+        <div id="releases-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Populated via JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 3: MILESTONE 3 VIEW ==================== -->
+    <section id="tab-m3" class="tab-content hidden space-y-6">
+      <!-- Service Banner -->
+      <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-xl flex flex-wrap items-center justify-between gap-4">
+        <div class="flex flex-wrap items-center gap-4 text-xs">
+          <div class="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-semibold">
+            <i class="fa-solid fa-bell animate-bounce"></i>
+            <span>Notification Service: Running</span>
+          </div>
+          <div class="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-sky-500/10 border border-sky-500/20 text-sky-400 font-semibold">
+            <i class="fa-solid fa-code-commit"></i>
+            <span>Security Status: CI/CD Sync Active</span>
+          </div>
+        </div>
+        <div class="flex items-center space-x-3">
+          <button onclick="exportCSV()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3.5 py-2 rounded-lg flex items-center space-x-2 transition font-medium">
+            <i class="fa-solid fa-file-csv text-emerald-400"></i>
+            <span>Export CSV</span>
+          </button>
+          <button onclick="exportPDF()" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-2 rounded-lg flex items-center space-x-2 shadow-md transition font-medium">
+            <i class="fa-solid fa-file-pdf"></i>
+            <span>Export PDF</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Webhook Simulator & REST API Explorer Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- CI/CD Git Webhook Bot Simulator (5 cols) -->
+        <div class="lg:col-span-5 bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl space-y-4">
+          <div class="border-b border-slate-800 pb-3 flex items-center justify-between">
+            <h2 class="text-base font-bold text-white flex items-center space-x-2">
+              <i class="fa-solid fa-robot text-indigo-400"></i>
+              <span>Automated CI/CD Git Webhook</span>
+            </h2>
+            <span class="text-xs font-mono text-slate-400">POST /api/v1/webhooks/git</span>
+          </div>
+          <p class="text-xs text-slate-400">
+            Simulate a GitHub push commit. The bot extracts regex patterns like <code class="text-indigo-300">fixes #2</code> or <code class="text-indigo-300">closes #4</code> and auto-advances matching bug tickets directly to <span class="text-amber-400 font-semibold">QA_VERIFICATION</span>.
+          </p>
+
+          <div class="space-y-3 text-xs">
+            <div>
+              <label class="block font-semibold text-slate-300 mb-1">Git Commit Message</label>
+              <input type="text" id="webhook-commit-msg" value="Merge PR #45: fixes #2 login password crash" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 font-mono text-xs focus:outline-none focus:border-indigo-500" />
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-semibold text-slate-300 mb-1">Commit SHA</label>
+                <input type="text" id="webhook-commit-sha" value="a7f8c92" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 font-mono text-xs focus:outline-none focus:border-indigo-500" />
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-300 mb-1">Branch</label>
+                <input type="text" id="webhook-commit-branch" value="main" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 font-mono text-xs focus:outline-none focus:border-indigo-500" />
+              </div>
+            </div>
+
+            <div class="pt-2 flex flex-col gap-2">
+              <button onclick="simulateGitWebhook()" class="w-full py-2.5 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-lg shadow-lg shadow-emerald-500/20 transition flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-play"></i>
+                <span>Simulate Git Commit (fixes #2)</span>
+              </button>
+              <button onclick="setSampleWebhookCommit('fixes #4 invalid bearer token gateway')" class="text-[11px] text-slate-400 hover:text-slate-200 text-center">
+                Or try commit: "Merge: fixes #4 invalid bearer token gateway"
+              </button>
+            </div>
+
+            <!-- Webhook Response Output Window -->
+            <div id="webhook-output-box" class="hidden mt-3 p-3 bg-slate-950 rounded-xl border border-slate-800 font-mono text-[11px] text-emerald-400 space-y-1"></div>
+          </div>
+        </div>
+
+        <!-- Live REST API Explorer (7 cols) -->
+        <div class="lg:col-span-7 bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl flex flex-col space-y-4">
+          <div class="border-b border-slate-800 pb-3 flex items-center justify-between">
+            <h2 class="text-base font-bold text-white flex items-center space-x-2">
+              <i class="fa-solid fa-terminal text-indigo-400"></i>
+              <span>Live REST API Explorer</span>
+            </h2>
+            <span class="text-xs text-slate-400">Interactive Endpoint Tester</span>
+          </div>
+
+          <!-- Endpoint selector and send button -->
+          <div class="flex flex-wrap sm:flex-nowrap gap-2 text-xs">
+            <select id="api-explorer-endpoint" class="w-full sm:w-2/3 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500 font-mono">
+              <option value="/api/v1/issues/">GET /api/v1/issues/</option>
+              <option value="/api/v1/projects/">GET /api/v1/projects/</option>
+              <option value="/api/v1/sprints/">GET /api/v1/sprints/</option>
+              <option value="/api/v1/analytics/quality-metrics">GET /api/v1/analytics/quality-metrics</option>
+              <option value="/api/v1/analytics/defect-trends">GET /api/v1/analytics/defect-trends</option>
+              <option value="/api/v1/analytics/developer-workload">GET /api/v1/analytics/developer-workload</option>
+              <option value="/health">GET /health</option>
+            </select>
+            <button onclick="executeApiExplorerRequest()" class="w-full sm:w-1/3 py-2 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg shadow transition flex items-center justify-center space-x-2">
+              <i class="fa-solid fa-paper-plane"></i>
+              <span>Send Request</span>
+            </button>
+          </div>
+
+          <!-- Console Output Box -->
+          <div class="flex-1 flex flex-col bg-slate-950 rounded-xl border border-slate-800 p-3 min-h-[220px]">
+            <div class="flex items-center justify-between text-[11px] text-slate-500 border-b border-slate-800 pb-1.5 mb-2">
+              <span>RESPONSE PAYLOAD (JSON)</span>
+              <span id="api-explorer-status" class="font-bold text-emerald-400">Ready</span>
+            </div>
+            <pre id="api-explorer-output" class="flex-1 overflow-auto text-[11px] text-indigo-300 font-mono leading-relaxed">Click "Send Request" above to test the live API response.</pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Plotly Interactive Visualizations -->
+      <div class="space-y-4">
+        <h2 class="text-base font-bold text-white flex items-center space-x-2">
+          <i class="fa-solid fa-chart-pie text-indigo-400"></i>
+          <span>Plotly.js Interactive Defect Analytics</span>
+        </h2>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <!-- 14-Day Trend Line Chart (8 cols) -->
+          <div class="lg:col-span-8 bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-xl">
+            <div id="chart-defect-trends" class="w-full h-80"></div>
+          </div>
+          <!-- Severity Donut Chart (4 cols) -->
+          <div class="lg:col-span-4 bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-xl">
+            <div id="chart-severity-donut" class="w-full h-80"></div>
+          </div>
+        </div>
+        <!-- Workflow Pipeline Bar Chart -->
+        <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-xl">
+          <div id="chart-workflow-bar" class="w-full h-72"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 4: MILESTONE 4 VIEW ==================== -->
+    <section id="tab-m4" class="tab-content hidden space-y-6">
+      <!-- Section Header -->
+      <div class="bg-slate-900/60 p-4 rounded-2xl border border-slate-800 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 class="text-xl font-bold text-white flex items-center space-x-2">
+            <i class="fa-solid fa-gauge-high text-indigo-400"></i>
+            <span>Milestone 4: Team Productivity & System Scale</span>
+          </h1>
+          <p class="text-xs text-slate-400">Engineering Workload Matrix, PostgreSQL High-Scale Connection Pooling, and Quality Benchmarks.</p>
+        </div>
+        <button onclick="publishAllDocumentation()" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3.5 py-2 rounded-lg flex items-center space-x-2 shadow-lg shadow-indigo-500/20 transition">
+          <i class="fa-solid fa-bullhorn"></i>
+          <span>Publish All Documentation & Guides</span>
+        </button>
+      </div>
+
+      <!-- Top 4 KPI Metric Boxes -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- KPI 1: Fix Rate -->
+        <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl flex items-center justify-between">
+          <div>
+            <span class="text-xs text-slate-400 uppercase font-semibold tracking-wider">Bug Fix Rate</span>
+            <div id="kpi-fix-rate" class="text-2xl font-black text-emerald-400 mt-1">-- %</div>
+            <span class="text-[11px] text-slate-500 mt-1 block">Resolved & Closed bugs</span>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-xl">
+            <i class="fa-solid fa-check-double"></i>
+          </div>
+        </div>
+
+        <!-- KPI 2: MTTR -->
+        <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl flex items-center justify-between">
+          <div>
+            <span class="text-xs text-slate-400 uppercase font-semibold tracking-wider">Average Fix Time (MTTR)</span>
+            <div id="kpi-mttr" class="text-2xl font-black text-sky-400 mt-1">-- hrs</div>
+            <span class="text-[11px] text-slate-500 mt-1 block">Created to Resolved turnaround</span>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400 text-xl">
+            <i class="fa-solid fa-stopwatch"></i>
+          </div>
+        </div>
+
+        <!-- KPI 3: Backlog Health Score -->
+        <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl flex items-center justify-between">
+          <div>
+            <span class="text-xs text-slate-400 uppercase font-semibold tracking-wider">Backlog Health Score</span>
+            <div id="kpi-health-score" class="text-2xl font-black text-indigo-400 mt-1">-- / 100</div>
+            <span class="text-[11px] text-slate-500 mt-1 block">Penalty weighted on critical bugs</span>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 text-xl">
+            <i class="fa-solid fa-heart-pulse"></i>
+          </div>
+        </div>
+
+        <!-- KPI 4: Defect Leakage Rate -->
+        <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl flex items-center justify-between">
+          <div>
+            <span class="text-xs text-slate-400 uppercase font-semibold tracking-wider">Defect Leakage Rate</span>
+            <div id="kpi-leakage-rate" class="text-2xl font-black text-rose-400 mt-1">-- %</div>
+            <span class="text-[11px] text-slate-500 mt-1 block">Production environment escapes</span>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 text-xl">
+            <i class="fa-solid fa-radiation"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- System Scale & Performance Card + Database Checklist Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Scale & Performance Card (6 cols) -->
+        <div class="lg:col-span-6 bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl space-y-4">
+          <div class="border-b border-slate-800 pb-3 flex items-center justify-between">
+            <h2 class="text-base font-bold text-white flex items-center space-x-2">
+              <i class="fa-solid fa-bolt text-yellow-400"></i>
+              <span>System Scale & Performance</span>
+            </h2>
+            <span class="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20">Optimal</span>
+          </div>
+          <div class="grid grid-cols-3 gap-3 text-center">
+            <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+              <span class="text-xs text-slate-400 block">Max DB Pool</span>
+              <span class="text-lg font-bold text-white mt-1 block">125 active</span>
+              <span class="text-[10px] text-slate-500">capacity limit</span>
+            </div>
+            <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+              <span class="text-xs text-slate-400 block">Avg Response</span>
+              <span class="text-lg font-bold text-emerald-400 mt-1 block">180ms</span>
+              <span class="text-[10px] text-slate-500">target: &lt; 300ms</span>
+            </div>
+            <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+              <span class="text-xs text-slate-400 block">Stress Capacity</span>
+              <span class="text-lg font-bold text-indigo-400 mt-1 block">50,000+</span>
+              <span class="text-[10px] text-slate-500">issues indexed</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Database Performance Checklist (6 cols) -->
+        <div class="lg:col-span-6 bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl space-y-3">
+          <div class="border-b border-slate-800 pb-3 flex items-center justify-between">
+            <h2 class="text-base font-bold text-white flex items-center space-x-2">
+              <i class="fa-solid fa-list-check text-indigo-400"></i>
+              <span>Database Performance Checklist</span>
+            </h2>
+            <span class="text-xs text-indigo-400 font-mono">SQLAlchemy 2.0</span>
+          </div>
+          <ul class="space-y-2 text-xs text-slate-300">
+            <li class="flex items-center space-x-2.5 p-2 bg-slate-950/60 rounded-lg border border-slate-800">
+              <i class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>
+              <span><strong>PostgreSQL Composite Indexes:</strong> Active on <code class="text-indigo-300">(project_id, status)</code>, <code class="text-indigo-300">(assignee_id, status)</code>, and <code class="text-indigo-300">(created_at)</code>.</span>
+            </li>
+            <li class="flex items-center space-x-2.5 p-2 bg-slate-950/60 rounded-lg border border-slate-800">
+              <i class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>
+              <span><strong>Connection Pooling Enabled:</strong> <code class="text-indigo-300">pool_size=20</code>, <code class="text-indigo-300">max_overflow=10</code>, <code class="text-indigo-300">pool_pre_ping=True</code>.</span>
+            </li>
+            <li class="flex items-center space-x-2.5 p-2 bg-slate-950/60 rounded-lg border border-slate-800">
+              <i class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>
+              <span><strong>Zero Critical Security Violations:</strong> Passwords hashed with bcrypt, stateless JWT HMAC-SHA256, strictly enforced RBAC.</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Developer Productivity Matrix Table -->
+      <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <h2 class="text-base font-bold text-white flex items-center space-x-2">
+            <i class="fa-solid fa-users-gear text-indigo-400"></i>
+            <span>Team Productivity & Developer Workload Matrix</span>
+          </h2>
+          <span class="text-xs text-slate-400">Resource Balance & Burnout Prevention Indicator</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-950 text-slate-400 uppercase font-semibold border-b border-slate-800">
+              <tr>
+                <th class="px-4 py-3">Developer</th>
+                <th class="px-4 py-3">Team</th>
+                <th class="px-4 py-3">Active Tasks</th>
+                <th class="px-4 py-3">Completed Fixes</th>
+                <th class="px-4 py-3">Avg MTTR (Turnaround)</th>
+                <th class="px-4 py-3">Resource Balance</th>
+              </tr>
+            </thead>
+            <tbody id="developer-workload-tbody" class="divide-y divide-slate-800 font-medium">
+              <!-- Populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- System Maintenance & Database Administration (Module 5 & Page 10) -->
+      <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl space-y-4">
+        <div class="border-b border-slate-800 pb-3 flex items-center justify-between">
+          <div>
+            <h2 class="text-base font-bold text-white flex items-center space-x-2">
+              <i class="fa-solid fa-server text-indigo-400"></i>
+              <span>System Maintenance & Data Administration (Module 5 & Page 10)</span>
+            </h2>
+            <p class="text-xs text-slate-400">Trigger snapshot backups, test recovery integrity, inspect data retention, and view multi-portal registry.</p>
+          </div>
+          <span class="text-xs font-mono bg-slate-800 text-indigo-300 px-2.5 py-1 rounded border border-slate-700">POST /api/v1/system/</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <button onclick="triggerDatabaseBackup()" class="p-3 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-xl text-left transition space-y-1">
+            <div class="flex items-center space-x-2 font-bold text-slate-200 text-xs">
+              <i class="fa-solid fa-download text-indigo-400"></i>
+              <span>Create DB Backup</span>
+            </div>
+            <p class="text-[11px] text-slate-400">Dumps all relational tables to JSON snapshot file.</p>
+          </button>
+
+          <button onclick="triggerDatabaseRestore()" class="p-3 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-xl text-left transition space-y-1">
+            <div class="flex items-center space-x-2 font-bold text-slate-200 text-xs">
+              <i class="fa-solid fa-clock-rotate-left text-emerald-400"></i>
+              <span>Verify DB Recovery</span>
+            </div>
+            <p class="text-[11px] text-slate-400">Validates schema integrity and latest snapshot restore.</p>
+          </button>
+
+          <button onclick="triggerRetentionPolicyCheck()" class="p-3 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-xl text-left transition space-y-1">
+            <div class="flex items-center space-x-2 font-bold text-slate-200 text-xs">
+              <i class="fa-solid fa-calendar-check text-sky-400"></i>
+              <span>Retention Policy (90d)</span>
+            </div>
+            <p class="text-[11px] text-slate-400">Evaluates archived records beyond retention threshold.</p>
+          </button>
+
+          <button onclick="showUserPortals()" class="p-3 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-xl text-left transition space-y-1">
+            <div class="flex items-center space-x-2 font-bold text-slate-200 text-xs">
+              <i class="fa-solid fa-network-wired text-purple-400"></i>
+              <span>User Portals (Page 10)</span>
+            </div>
+            <p class="text-[11px] text-slate-400">Inspect registered Web, API, Mobile & CI/CD consoles.</p>
+          </button>
+        </div>
+
+        <div id="system-admin-output" class="hidden p-3 bg-slate-950 rounded-xl border border-slate-800 font-mono text-[11px] text-slate-300"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- ISSUE DETAIL MODAL -->
+  <div id="issue-detail-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <!-- Modal Header -->
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950">
+        <div class="flex items-center space-x-3">
+          <span id="modal-issue-id" class="text-sm font-bold font-mono px-2 py-0.5 rounded bg-indigo-600 text-white">B-000</span>
+          <h3 id="modal-issue-title" class="text-base font-bold text-white truncate max-w-md">Issue Title</h3>
+        </div>
+        <button onclick="closeIssueModal()" class="text-slate-400 hover:text-white text-lg px-2">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="p-5 overflow-y-auto space-y-5 text-xs">
+        <!-- Status Badges & Quick Transition Buttons -->
+        <div class="p-4 bg-slate-950/80 rounded-xl border border-slate-800 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-2">
+              <span id="modal-status-badge" class="px-2.5 py-1 rounded font-bold">REPORTED</span>
+              <span id="modal-severity-badge" class="px-2.5 py-1 rounded font-bold">CRITICAL</span>
+              <span id="modal-priority-badge" class="px-2.5 py-1 rounded font-bold">URGENT</span>
+              <span id="modal-type-badge" class="px-2.5 py-1 rounded font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">BUG</span>
+              <span id="modal-assignee-text" class="text-slate-400 ml-2">Assignee: Unassigned</span>
+            </div>
+
+            <!-- State Machine Action Buttons -->
+            <div id="modal-transitions-container" class="flex flex-wrap items-center gap-2">
+              <!-- Populated via JS based on allowed next states -->
+            </div>
+          </div>
+
+          <!-- Extended Metadata & Action Toolbar -->
+          <div class="pt-2 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2">
+            <div class="flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
+              <span id="modal-tags-badge" class="bg-slate-800 px-2 py-0.5 rounded text-slate-300"><i class="fa-solid fa-tags mr-1"></i>Tags: None</span>
+              <span id="modal-coderef-badge" class="bg-slate-800 px-2 py-0.5 rounded text-indigo-300"><i class="fa-solid fa-code mr-1"></i>Ref: None</span>
+              <span id="modal-release-badge" class="bg-slate-800 px-2 py-0.5 rounded text-emerald-300"><i class="fa-solid fa-flag-checkered mr-1"></i>Release: Unscheduled</span>
+            </div>
+
+            <div class="flex items-center space-x-2">
+              <button type="button" onclick="triggerModalAICore()" class="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[11px] shadow transition flex items-center space-x-1">
+                <i class="fa-solid fa-brain"></i>
+                <span>BugFlow AI Core</span>
+              </button>
+              <button type="button" onclick="openMergeModal()" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-[11px] transition flex items-center space-x-1">
+                <i class="fa-solid fa-code-merge"></i>
+                <span>Merge Duplicate</span>
+              </button>
+              <button type="button" onclick="openEscalateModal()" class="px-2.5 py-1 rounded-lg bg-rose-950/60 hover:bg-rose-900/60 text-rose-300 border border-rose-800/60 font-medium text-[11px] transition flex items-center space-x-1">
+                <i class="fa-solid fa-bolt"></i>
+                <span>Escalate</span>
+              </button>
+              <button type="button" onclick="openApproveModal()" id="modal-approve-btn" class="px-2.5 py-1 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-800/60 font-medium text-[11px] transition flex items-center space-x-1">
+                <i class="fa-solid fa-circle-check"></i>
+                <span>Approve</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Issue Description & Steps -->
+        <div class="space-y-3">
+          <div>
+            <h4 class="font-bold text-slate-400 uppercase text-[10px] tracking-wider mb-1">Description</h4>
+            <div id="modal-issue-desc" class="p-3 bg-slate-950 rounded-lg text-slate-200 border border-slate-800 leading-relaxed whitespace-pre-wrap"></div>
+          </div>
+          <div>
+            <h4 class="font-bold text-slate-400 uppercase text-[10px] tracking-wider mb-1">Reproduction Steps</h4>
+            <div id="modal-issue-steps" class="p-3 bg-slate-950 rounded-lg font-mono text-[11px] text-slate-300 border border-slate-800 whitespace-pre-wrap"></div>
+          </div>
+        </div>
+
+        <!-- Discussion Thread & Comments -->
+        <div class="border-t border-slate-800 pt-4 space-y-3">
+          <h4 class="font-bold text-white flex items-center space-x-2">
+            <i class="fa-solid fa-comments text-indigo-400"></i>
+            <span>Discussion Thread</span>
+          </h4>
+          <div id="modal-comments-list" class="space-y-2 max-h-48 overflow-y-auto pr-1"></div>
+          <form onsubmit="handlePostComment(event)" class="flex gap-2">
+            <input type="text" id="modal-comment-input" required placeholder="Type a comment or reproduction note..." class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 text-xs focus:outline-none focus:border-indigo-500" />
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg font-semibold text-xs transition">
+              <i class="fa-solid fa-paper-plane mr-1"></i> Send
+            </button>
+          </form>
+        </div>
+
+        <!-- Screenshot & Log File Attachment Uploader -->
+        <div class="border-t border-slate-800 pt-4 space-y-3">
+          <h4 class="font-bold text-white flex items-center space-x-2">
+            <i class="fa-solid fa-paperclip text-indigo-400"></i>
+            <span>Attachments & Error Logs (.png, .jpg, .log, .pdf)</span>
+          </h4>
+          <div id="modal-attachments-list" class="space-y-1.5 max-h-32 overflow-y-auto"></div>
+          <form onsubmit="handleUploadAttachment(event)" class="flex items-center gap-2">
+            <input type="file" id="modal-file-input" required class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-slate-200 text-xs file:mr-3 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 cursor-pointer" />
+            <button type="submit" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 px-3 py-2 rounded-lg font-semibold text-xs transition">
+              <i class="fa-solid fa-cloud-arrow-up mr-1"></i> Upload
+            </button>
+          </form>
+        </div>
+
+        <!-- Immutable Audit Trail Log -->
+        <div class="border-t border-slate-800 pt-4 space-y-2">
+          <h4 class="font-bold text-white flex items-center space-x-2">
+            <i class="fa-solid fa-clock-rotate-left text-indigo-400"></i>
+            <span>Audit History Log</span>
+          </h4>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-[11px]">
+              <thead class="bg-slate-950 text-slate-500 uppercase font-semibold">
+                <tr>
+                  <th class="px-2 py-1.5">When</th>
+                  <th class="px-2 py-1.5">Action</th>
+                  <th class="px-2 py-1.5">Field</th>
+                  <th class="px-2 py-1.5">Old Value</th>
+                  <th class="px-2 py-1.5">New Value</th>
+                </tr>
+              </thead>
+              <tbody id="modal-audit-tbody" class="divide-y divide-slate-800"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SPRINT CREATION MODAL -->
+  <div id="create-sprint-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center space-x-2">
+          <i class="fa-solid fa-person-running text-indigo-400"></i>
+          <span>Create New Sprint</span>
+        </h3>
+        <button onclick="closeCreateSprintModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form onsubmit="handleCreateSprint(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Sprint Name</label>
+          <input type="text" id="sprint-name-input" required placeholder="e.g. Sprint 3 - Performance & Tuning" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500" />
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Goal</label>
+          <textarea id="sprint-goal-input" rows="2" placeholder="Sprint objective and key deliverables..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500"></textarea>
+        </div>
+        <button type="submit" class="w-full py-2 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg shadow transition">
+          Launch Sprint
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- BUGFLOW AI CORE ENGINE MODAL (Page 10 Architecture & Pipeline) -->
+  <div id="ai-core-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-indigo-500/40 rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950">
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
+            <i class="fa-solid fa-microchip"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">BugFlow AI Core Engine</h3>
+            <p class="text-[11px] text-slate-400">Architecture Engine: Auto-Triage, Historical Pattern Matching & Rollback Paths</p>
+          </div>
+        </div>
+        <button onclick="closeAICoreModal()" class="text-slate-400 hover:text-white text-lg px-2"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="p-5 overflow-y-auto space-y-4 text-xs">
+        <!-- AI Ethical Bias & Status Banner -->
+        <div class="p-3 bg-indigo-950/40 border border-indigo-500/30 rounded-xl flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-shield-halved text-emerald-400 text-base"></i>
+            <div>
+              <span class="font-bold text-slate-200 block">AI Ethical Bias Verification</span>
+              <span id="ai-ethics-report" class="text-[11px] text-emerald-400">PASSED: Pure technical merit verified.</span>
+            </div>
+          </div>
+          <span class="px-2.5 py-1 rounded bg-indigo-500/20 text-indigo-300 font-bold border border-indigo-500/30">Page 10 AI Core</span>
+        </div>
+
+        <!-- Inputs & Processing Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-1">
+            <span class="text-slate-400 font-semibold block text-[11px]">Categorization & Component</span>
+            <div id="ai-categorization" class="font-bold text-white text-sm">--</div>
+            <span class="text-[10px] text-slate-500">Component boundary identified</span>
+          </div>
+          <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-1">
+            <span class="text-slate-400 font-semibold block text-[11px]">AI Suggested Severity</span>
+            <div id="ai-suggested-sev" class="font-bold text-amber-400 text-sm">--</div>
+            <span id="ai-priority-score" class="text-[10px] text-slate-500">Score: --</span>
+          </div>
+          <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-1">
+            <span class="text-slate-400 font-semibold block text-[11px]">Estimated Cycle Turnaround</span>
+            <div id="ai-cycle-turnaround" class="font-bold text-emerald-400 text-sm">1.5 - 2 days</div>
+            <span class="text-[10px] text-slate-500">Historical fix baseline</span>
+          </div>
+        </div>
+
+        <!-- Personalized 4-Step Resolution Path (Page 10) -->
+        <div class="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
+          <h4 class="font-bold text-slate-200 flex items-center space-x-2">
+            <i class="fa-solid fa-route text-indigo-400"></i>
+            <span>Personalized Resolution Path & Suggested Automated Tests</span>
+          </h4>
+          <div id="ai-resolution-path-steps" class="space-y-2"></div>
+        </div>
+
+        <!-- Historical Pattern Matching -->
+        <div class="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
+          <h4 class="font-bold text-slate-200 flex items-center space-x-2">
+            <i class="fa-solid fa-clock-rotate-left text-sky-400"></i>
+            <span>Historical Fix Pattern Matching (Historical_Bug_Fixes Table)</span>
+          </h4>
+          <div id="ai-historical-patterns" class="space-y-1.5 font-mono text-[11px] text-slate-300"></div>
+        </div>
+
+        <!-- Recommended Developer Assignment -->
+        <div class="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
+          <h4 class="font-bold text-slate-200 flex items-center space-x-2">
+            <i class="fa-solid fa-user-check text-purple-400"></i>
+            <span>Developer Assignment Suggestion (Skill Profile Relevance)</span>
+          </h4>
+          <div id="ai-developer-assignments" class="space-y-2"></div>
+        </div>
+
+        <!-- Automated CI/CD & Rollback Paths -->
+        <div class="p-3.5 bg-rose-950/20 border border-rose-500/30 rounded-xl space-y-1">
+          <div class="font-bold text-rose-300 flex items-center space-x-2">
+            <i class="fa-solid fa-rotate-left"></i>
+            <span>Automated CI/CD & Rollback Paths</span>
+          </div>
+          <p id="ai-rollback-path" class="text-[11px] text-rose-200/90 leading-relaxed"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MERGE DUPLICATE ISSUE MODAL -->
+  <div id="merge-issue-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center space-x-2">
+          <i class="fa-solid fa-code-merge text-indigo-400"></i>
+          <span>Merge Duplicate Issue (Module 1)</span>
+        </h3>
+        <button onclick="closeMergeModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form onsubmit="handleMergeIssue(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Select Duplicate Issue to Merge</label>
+          <select id="merge-duplicate-select" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500"></select>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Reason / Notes</label>
+          <input type="text" id="merge-reason-input" value="Duplicate defect report identified during triage" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500" />
+        </div>
+        <p class="text-[11px] text-slate-400">The duplicate will be marked CLOSED with an immutable audit pointer; comments will be transferred to this primary issue.</p>
+        <button type="submit" class="w-full py-2 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg shadow transition">
+          Confirm Merge
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ESCALATE ISSUE MODAL -->
+  <div id="escalate-issue-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center space-x-2">
+          <i class="fa-solid fa-bolt text-rose-400"></i>
+          <span>Escalate Issue (Module 3)</span>
+        </h3>
+        <button onclick="closeEscalateModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form onsubmit="handleEscalateIssue(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Escalation Justification <span class="text-red-400">*</span></label>
+          <textarea id="escalate-reason-input" required rows="3" placeholder="Explain why this issue requires urgent managerial elevation..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-rose-500"></textarea>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Target Priority</label>
+          <select id="escalate-priority-select" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-rose-500">
+            <option value="URGENT" selected>URGENT (P0)</option>
+            <option value="HIGH">HIGH (P1)</option>
+          </select>
+        </div>
+        <button type="submit" class="w-full py-2 px-4 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-lg shadow transition">
+          Elevate to Urgent
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- APPROVE ISSUE MODAL -->
+  <div id="approve-issue-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center space-x-2">
+          <i class="fa-solid fa-circle-check text-emerald-400"></i>
+          <span>Approve Stage Transition (Module 3)</span>
+        </h3>
+        <button onclick="closeApproveModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form onsubmit="handleApproveIssue(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Approval Notes</label>
+          <input type="text" id="approve-notes-input" value="Code and verification reviewed and approved by lead" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500" />
+        </div>
+        <button type="submit" class="w-full py-2 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg shadow transition">
+          Approve & Advance
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- USER PORTALS MODAL (Page 10 Schema) -->
+  <div id="portals-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-5 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center space-x-2">
+          <i class="fa-solid fa-cubes text-purple-400"></i>
+          <span>BugFlow User Portals (Page 10 Schema)</span>
+        </h3>
+        <button onclick="document.getElementById('portals-modal').classList.add('hidden')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div id="portals-list-container" class="space-y-2.5 text-xs"></div>
+    </div>
+  </div>
+
+  <!-- App JavaScript -->
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

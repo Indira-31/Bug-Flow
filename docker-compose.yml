@@ -1,0 +1,40 @@
+﻿version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: bugflow_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: bugflow_user
+      POSTGRES_PASSWORD: bugflow_secure_password_2026
+      POSTGRES_DB: bugflow_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bugflow_user -d bugflow_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    container_name: bugflow_web_app
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://bugflow_user:bugflow_secure_password_2026@db:5432/bugflow_db
+      - SECRET_KEY=bugflow-super-secure-jwt-secret-key-enterprise-2026-production-token-v1
+      - DB_POOL_SIZE=20
+      - DB_MAX_OVERFLOW=10
+    volumes:
+      - ./app/uploads:/app/app/uploads
+
+volumes:
+  postgres_data:
