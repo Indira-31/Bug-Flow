@@ -28,8 +28,8 @@ jobs:
 
     - name: Run Test Suite (36 Tests)
       run: |
+        mkdir -p junit
         python -m pytest tests/ -v --junitxml=junit/test-results.xml
-
     - name: Verify Scalability Benchmark (< 300ms SLA)
       run: |
         python -m pytest tests/test_scalability.py -s -v
